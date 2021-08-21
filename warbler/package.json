@@ -1,0 +1,22 @@
+{
+	"name": "app",
+	"version": "1.0.0",
+	"description": "Test demo application for photon",
+	"keywords": [
+		"test",
+		"demo",
+		"skitch"
+	],
+	"license": "ISC",
+	"author": "Maurice Conrad",
+	"main": "main.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"start": "electron ."
+	},
+	"dependencies": {
+		"cytoscape": "^3.18.2",
+		"cytoscape-cxtmenu": "^3.4.0",
+		"electron-photon": "^1.1.6"
+	}
+}
