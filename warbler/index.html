@@ -117,7 +117,7 @@
                 <form id="node_form">
                   <div class="form-group">
                     <label>Title</label>
-                    <input class="form-control" id="title_form" placeholder="title">
+                    <textarea class="form-control" id="title_form" rows="1" ></textarea>
                   </div>
                   <div class="form-group">
                     <label>Description</label>
@@ -127,10 +127,10 @@
                     <label>ID</label>
                     <textarea class="form-control" id="id_form" rows="1" ></textarea>
                   </div>
-                  <div class="form-actions">
+                  <!-- <div class="form-actions">
                     <button type="submit" class="btn btn-form btn-default">Cancel</button>
                     <button type="submit" class="btn btn-form btn-primary">OK</button>
-                  </div>
+                  </div> -->
                   <nav-group id="tag_select">
                     <h5 class="nav-group-title">Tags</h5>
                     <nav-item class="set_tag" id="red">
@@ -323,6 +323,57 @@
     // require('./renderer.js');
     var test_graph = require('./cy_graph.js');
     var cy = test_graph.createGraph();
+
+    const remote = require('electron').remote
+    remote.app.on('before-quit', (event) => {
+  console.warn('users tries to quit');
+    });
+
+    
+    // this.addEventListener('keypress', event => {
+    // function keyHandler(event) {
+    //   event = event || window.event;
+    document.addEventListener('keydown', (event) => {
+      console.log(event.keyCode)
+      console.log(event)
+      if (event.keyCode == 83 && event.metaKey) {
+        console.log("save file")
+
+        const {remote} = require('electron');
+        var dialog = remote.dialog;
+
+        var browserWindow = remote.getCurrentWindow();
+        var options = {
+            title: "Save new file as...",
+            defaultPath : "/path/to/new_file.json"
+        }
+
+        let save_path = dialog.showSaveDialog(browserWindow, options);
+        const fs = require('fs');
+        try { fs.writeFileSync(save_path, JSON.stringify(cy.json(), null, 2), 'utf-8'); }
+        catch(e) { alert('Failed to save the file !'); }
+      }
+      if (event.keyCode == 76 && event.metaKey) {
+        console.log("load file")
+
+        const {remote} = require('electron');
+        var dialog = remote.dialog;
+
+        var browserWindow = remote.getCurrentWindow();
+        var options = {
+            title: "Load file...",
+            defaultPath : "/path/to/new_file.json"
+        }
+        let load_path = dialog.showOpenDialog({ properties: ['openFile', 'multiSelections'] })
+        console.log(load_path[0])
+        const fs = require('fs');
+        try { 
+          cy = cy.json(JSON.parse(fs.readFileSync(load_path[0], 'utf-8'))); 
+
+        }
+        catch(e) { alert('Failed to load the file !'); }
+      }
+    })
   </script>
   <style>
     #cy {

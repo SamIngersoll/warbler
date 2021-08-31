@@ -8,11 +8,10 @@ electron.app.on("ready", function() {
     webPreferences: {
       experimentalFeatures: true,
       nodeIntegration: true
-    }
+    } 
   });
   window.loadURL("file://" + __dirname + "/index.html");
 
   window.openDevTools();
-
 
 });

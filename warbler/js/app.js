@@ -1,6 +1,6 @@
 const tg = require('./cy_graph');
-// console.log("IMPORT WORKED");
-// console.log(tg);
+console.log("IMPORT WORKED");
+console.log(tg);
 
 // Require Photon
 const Photon = require('./../');

@@ -1,16 +1,15 @@
 //
 /* TODO
-  only show notdone items in list, done items removed (do filtering using cytoscape in code)
-  add done checkbox in graph view for returning done items to notdone
-  initially all nodes gray, independent of tag
-  pressing 'return' or 'ok' on form page restarts app, removing data?
-  save file
-  undo/redo
-  when the window is resized in table view, network disappears, never to return.
+  todo here: https://github.com/SamIngersoll/warbler/projects/1?fullscreen=true
 */
 
 var cytoscape = require('./cytoscape');
+
 var TestGraph = function() {};
+
+TestGraph.prototype.saveGraph = function(cy) {
+  
+}
 
 TestGraph.prototype.createGraph = function() {
   var colors = {
@@ -58,6 +57,9 @@ TestGraph.prototype.createGraph = function() {
 
   cy.style().selector('node:selected').style("background-color", "rgb(59,105,213)");
   cy.style().selector('node.done').style("background-blacken", "-0.8");
+
+  
+
 
   // on RIGHT CLICK
   cy.on('cxttapstart', function(event){
@@ -245,6 +247,17 @@ return cy;
     id = makeid(20);
     return id;
   }
+  function make_empty_tr() {
+    var table = document.getElementById("task_table");
+    var row = table.insertRow(-1); // 0 for first position, -1 for last position
+    var cell1 = row.insertCell(0);
+    var cell2 = row.insertCell(1);
+    var cell3 = row.insertCell(2);
+
+    cell1.innerHTML = " ";
+    cell2.innerHTML = " ";
+    cell3.innerHTML = " ";
+  }
   function make_tr(cy, id) {
     // creates a new table row in the task table
     // uses information from the cytoscape db
@@ -275,8 +288,6 @@ return cy;
                       </div>";
     cell2.innerHTML = "<span class='icon icon-record' style='color:"+colors[tag]+"'></span>"+description;
     cell3.innerHTML = id;
-
-    var box = cell1.getElementsByTagName('input')[0];
   }
   /*
   // FUNCTION
@@ -286,13 +297,62 @@ return cy;
   only show rows corresponding to nodes that are not done
   */
   function update_table(cy) {
-    console.log("Updating table, function not written");
-    console.log(cy);
-    var nodes = cy.$('node');
-    for (var i=0 ; i<nodes.length ; i++) {
-      var id = nodes[i]._private.data.id;
+    
+    // delete all rows from the table
+    var table = document.getElementById("task_table");
+    for (var i=table.rows.length-1 ; i>=0 ; i--) {
+    // for (var i=0 ; i<table.rows.length ; i++) {
+      table.rows[i].remove();
+    }
+
+    var done_eles = cy.filter('node[done = "true"]').remove();
+
+
+    // IMMEDIATE TODO ITEMS
+    // add all notdone orphan tasks to table
+    var eles = cy.nodes();
+    eles = cy.filter('node[done = "false"]');
+    eles = eles.roots();
+    // add new rows to the table
+    for (var i=0 ; i<eles.length ; i++) {
+      id = eles[i]._private.data.id;
+      make_tr(cy, id);
       update_tr(cy, id);
     }
+    make_empty_tr();
+    make_empty_tr();
+    make_empty_tr();
+    root_eles = cy.nodes().roots().remove();
+
+    // LATER TODO ITEMS
+    // add all notdone nonorphan tasks to table
+    var eles = cy.nodes();
+    eles = cy.filter('node[done = "false"]');
+    // eles = eles.nonorphans();
+    // add new rows to the table
+    for (var i=0 ; i<eles.length ; i++) {
+      id = eles[i]._private.data.id;
+      make_tr(cy, id);
+      update_tr(cy, id);
+    }
+    make_empty_tr();
+    make_empty_tr();
+    make_empty_tr();
+
+    root_eles.restore();
+    done_eles.restore();
+    // DONE ITEMS
+
+    // // add all finished tasks to table
+    var eles = cy.nodes();
+    var eles = cy.filter('node[done = "true"]');
+    // add new rows to the table
+    for (var i=0 ; i<eles.length ; i++) {
+      id = eles[i]._private.data.id;
+      make_tr(cy, id);
+      update_tr(cy, id);
+    }
+    
   }
   function update_tr(cy, id) {
     // updates a table row in the task table
@@ -387,9 +447,6 @@ return cy;
       //    or node never had parents, so requirement to begin node is met
       nodes.orphans()
   }
-
-
-
 };
 
 module.exports = new TestGraph();
