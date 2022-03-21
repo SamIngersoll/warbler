@@ -149,9 +149,9 @@
                       <span class="icon icon-record" style="color:#57acf5; display: flex; justify-content: center; align-items: center;"></span>
                       Blue
                     </nav-item>
-                    <nav-item class="set_tag" id="none" class="active">
+                    <nav-item class="set_tag" id="gray" class="active">
                       <span class="icon icon-record" style="color:#888888; display: flex; justify-content: center; align-items: center;"></span>
-                      None
+                      Gray
                     </nav-item>
                   </nav-group>
                   </nav>
@@ -323,7 +323,7 @@
     // require('./renderer.js');
     var test_graph = require('./cy_graph.js');
     var cy = test_graph.createGraph();
-
+    
     const remote = require('electron').remote
     remote.app.on('before-quit', (event) => {
       console.warn('users tries to quit');
@@ -336,6 +336,14 @@
     document.addEventListener('keydown', (event) => {
       console.log(event.keyCode)
       console.log(event)
+      // cy.center(cy.nodes);
+      
+      // home the view
+      if (event.keyCode == 72 && event.shiftKey ) {
+        cy.fit(cy.nodes, window.innerWidth/5);
+      }
+
+      // save file
       if (event.keyCode == 83 && event.metaKey) {
         console.log("save file")
 
@@ -355,6 +363,8 @@
         try { fs.writeFileSync(save_path, JSON.stringify(cy.json(), null, 2), 'utf-8'); }
         catch(e) { alert('Failed to save the file !'); }
       }
+
+      // load a file
       if (event.keyCode == 76 && event.metaKey) {
         console.log("load file")
 

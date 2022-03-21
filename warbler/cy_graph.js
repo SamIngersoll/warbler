@@ -12,14 +12,14 @@ var colors = {
   orange: "#fdbc40",
   green:  "#34c84a",
   blue:   "#57acf5",
-  none:   "#888888"
+  gray:   "#888888"
 };
 var outline_colors = {
   red:    "#e82b25",
   orange: "#f09226",
   green:  "#11a627",
   blue:   "#1080e0",
-  none:   "#636363"
+  gray:   "#636363"
 };
 
 TestGraph.prototype.saveGraph = function() {
@@ -42,28 +42,19 @@ TestGraph.prototype.formatGraph = function(cy) {
   }
   make_unordered_table(cy);
 
-  // fix formatting from old files
+  // fix formatting from old files (old files may not have certain styles, in this case :selected selector)
   var count = 0;
   for (var i=0 ; i<cy._private.style.length ;i++ ) {
     count += (cy._private.style[i].selector.inputText == ":selected")
   }
   
   if (count == 1) {
-    // console.log(cy._private.style)
     console.log("attempting to fix formatting")
-    // var new_selector = new Selector();
-    // console.log("SELECTOR", new_selector)
-    console.log(cy._private.style[4].properties)
     cy._private.style[4].properties[6] = {}
     cy._private.style[4].properties[6].name = "border-width"
     cy._private.style[4].properties[6].pfValue = 4
     cy._private.style[4].properties[6].units = "px"
     cy._private.style[4].properties[6].value = 4
-    // cy._private.style[4]["border-width"] = {}
-    // cy._private.style[4]["border-width"].name = "border-width"
-    // cy._private.style[4]["border-width"].pfValue = 4
-    // cy._private.style[4]["border-width"].units = "px"
-    // cy._private.style[4]["border-width"].value = 4
   }
   
 }
@@ -76,10 +67,10 @@ TestGraph.prototype.createGraph = function() {
     // nodes: [],
     nodes: [
       {data: { id: 'a', title: "start the project", description: "this is a node", tag: "red", done: 'false' }},
-      {data: { id: 'b', title: "finish the project", description: "this is b node", tag: "none", done: 'false' }}
+      {data: { id: 'b', title: "finish the project", description: "this is b node", tag: "gray", done: 'false' }}
     ],
     edges: [
-      {data: { id: 'ab', source: 'a', target: 'b' }}
+      {data: { id: 'ab', source: 'a', target: 'b', colors: 'red gray', arrow_color: 'gray'}}
     ]
   },
   layout: {
@@ -94,14 +85,22 @@ TestGraph.prototype.createGraph = function() {
           selector: 'node',
           style: {
             'content': 'data(title)',
+            'color' : 'data(tag)'
           }
         },
 
         {
           selector: 'edge',
           style: {
+            // 'curve-style': 'taxi',
             'curve-style': 'bezier',
-            'target-arrow-shape': 'triangle'
+            // 'curve-style': 'unbundled-bezier',
+            // 'control-point-distance': '20px',
+            // 'control-point-weight': '0.7', // '0': curve towards source node, '1': towards target node.
+            'target-arrow-shape': 'triangle',
+            'line-fill': 'linear-gradient',
+            'line-gradient-stop-colors': 'data(colors)',
+            'target-arrow-color': 'data(arrow_color)',
           }
         },
         {
@@ -109,11 +108,19 @@ TestGraph.prototype.createGraph = function() {
           style: {
             'border-width': '4'
           }
-      },
+        },
+        {
+          selector: '.done',
+          style: {
+            'opacity': '0.5'
+          }
+        },
+      
       ],
   });
   cy.boxSelectionEnabled(true);
   format_network(cy);
+  
   // cy.style().selector('node:selected').style("background-color", "rgb(59,105,213)");
   // cy.style().selector('node.done').style("background-blacken", "-0.8");
 
@@ -134,32 +141,36 @@ TestGraph.prototype.createGraph = function() {
         var new_target = seles[0]._private.data.source
         // delete edge,
         cy.$(':selected').remove();
+
+        // get colors for edge gradient
+        var col1 = get_edge_color(cy.$('#'+new_source)[0]._private.data.tag);
+        var col2 = get_edge_color(cy.$('#'+new_target)[0]._private.data.tag);
+
         // add edge with reversed direction
         var eles = cy.add([
-          { group: 'edges', data: { id: new_id, source: new_source, target: new_target } }
+          { group: 'edges', data: { id: new_id, source: new_source, target: new_target, colors: col1.concat(' ',col2), arrow_color: col2} }
         ]);
       } else {
         // add a new child node and a new edge
         var new_node_id = makeid(20);
         var source_id = seles[0]._private.data.id;
+
+        // get colors for edge gradient
+        var col1 = get_edge_color(cy.$('#'+source_id)[0]._private.data.tag);
+        var col2 = "lightslategray"
+
         var eles = cy.add([
-          { group: 'nodes', data: { id: new_node_id, title: "title", description: "description", tag: "none", done: "false"},
+          { group: 'nodes', data: { id: new_node_id, title: "title", description: "description", tag: "gray", done: "false"},
                             position: { x: event.position.x,
                                         y: event.position.y } },
-          { group: 'edges', data: { id: makeid(20), source: source_id, target: new_node_id } }
+          { group: 'edges', data: { id: makeid(20), source: source_id, target: new_node_id, colors: col1.concat(' ',col2), arrow_color: col2 } }
         ]);
         // select the newly added node
-        // var tag = cy.$('#'+id)._private.eles[0]._private.data.tag;
         cy.$(':selected').deselect();
         cy.$('#'+new_node_id).select();
-        // document.getElementById("title_form").value =
-        //                   cy.$('#'+new_node_id)._private.ids[new_node_id]._private.data.title;
-        // document.getElementById("description_form").value =
-        //                   cy.$('#'+new_node_id)._private.ids[new_node_id]._private.data.description;
-        // document.getElementById("id_form").value =
-        //                   cy.$('#'+new_node_id)._private.ids[new_node_id]._private.data.id;
-        cy.$('#'+new_node_id).style('background-color', colors["none"]);
-        cy.$('#'+new_node_id).style('border-color', outline_colors["none"]);
+
+        cy.$('#'+new_node_id).style('background-color', colors["gray"]);
+        cy.$('#'+new_node_id).style('border-color', outline_colors["gray"]);
         document.getElementById("title_form").value =
                           cy.$('#'+new_node_id)._private.eles[0]._private.data.title;
         document.getElementById("description_form").value =
@@ -170,22 +181,28 @@ TestGraph.prototype.createGraph = function() {
         
       }
     } else if (seles.length > 1) {
+      // add an edge between two nodes
       var source_id = seles[0]._private.data.id;
       var target_id = seles[1]._private.data.id;
+
+      // get colors for edge gradient
+      var col1 = get_edge_color(cy.$('#'+source_id)[0]._private.data.tag);
+      var col2 = get_edge_color(cy.$('#'+target_id)[0]._private.data.tag);
+
       var eles = cy.add([
         { group: 'edges',
-        data: { id: makeid(20), title: "title", source: source_id, target: target_id } }
+        data: { id: makeid(20), title: "title", source: source_id, target: target_id, colors: col1.concat(' ',col2), arrow_color: col2 } }
       ]);
     } else {
       // add single orphan node
       var new_node_id = makeid(20);
       var eles = cy.add([
-        { group: 'nodes', data: { id: new_node_id, title: "title", description: "description", tag: "none", done: "false"},
+        { group: 'nodes', data: { id: new_node_id, title: "title", description: "description", tag: "gray", done: "false"},
           position: { x: event.position.x,
                       y: event.position.y } }
         ]);
-      cy.$('#'+new_node_id).style('background-color', colors["none"]);
-      cy.$('#'+new_node_id).style('border-color', outline_colors["none"]);
+      cy.$('#'+new_node_id).style('background-color', colors["gray"]);
+      cy.$('#'+new_node_id).style('border-color', outline_colors["gray"]);
       make_unordered_table(cy);
     }
 
@@ -206,6 +223,7 @@ TestGraph.prototype.createGraph = function() {
       cy.resize();
     }
 
+    // change node color
     // if we are changing a color tag in the graph window
     else if (source.classList.contains("set_tag")) {
       var new_tag = source.id;
@@ -220,9 +238,17 @@ TestGraph.prototype.createGraph = function() {
         // set color here
         cy.$('#'+id).style('background-color', colors[new_tag]);
         cy.$('#'+id).style('border-color', outline_colors[new_tag]);
-        // no longer works
-        // cy.style().selector('node#'+id).style('background-color', colors[new_tag]).update()
-        // cy.style().selector('node#'+id).style('border-color', outline_colors[new_tag]).update()
+        cy.$('#'+id).style('color', outline_colors[new_tag]);
+
+        // update connected edges
+        var _edges = seles[i].connectedEdges()
+        for (var j = 0 ; j<_edges.length ; j++) {
+          var col1 = get_edge_color(cy.$('#'+_edges[j].data('source'))[0]._private.data.tag);
+          var col2 = get_edge_color(cy.$('#'+_edges[j].data('target'))[0]._private.data.tag);
+          console.log("NEW COLORS", col1.concat(' ',col2))
+          _edges[j].data('colors', col1.concat(' ',col2));
+          _edges[j].data('arrow_color', col2);
+        }
       }
     }
   });
@@ -299,8 +325,8 @@ TestGraph.prototype.createGraph = function() {
     text_active = true;
     if (cy.$(':selected').length > 0) {
       id = document.getElementById("id_form").value;
-      cy.$("#"+id)._private.ids[id]._private.data.title =
-              document.getElementById("title_form").value;
+      cy.$("#"+id).data('title',
+              document.getElementById("title_form").value);
       update_tr(cy, id);
     }
   };
@@ -309,8 +335,8 @@ TestGraph.prototype.createGraph = function() {
     text_active = true;
     if (cy.$(':selected').length > 0) {
       id = document.getElementById("id_form").value;
-      cy.$("#"+id)._private.ids[id]._private.data.description =
-              document.getElementById("description_form").value;
+      cy.$("#"+id).data('description',
+              document.getElementById("description_form").value);
       update_tr(cy, id)
   };
 };
@@ -564,5 +590,20 @@ return cy;
     }
   }
 
+  function get_edge_color(col1, done=false) {
+    // correct the red color
+    col1 = (col1 == "red") ? "orangered" : col1;
+    // correct the orange color
+    col1 = (col1 == "orange") ? "gold" : col1;
+    // correct the green color
+    col1 = (col1 == "green") ? "lawngreen" : col1;
+    // correct the blue color
+    col1 = (col1 == "blue") ? "deepskyblue" : col1;
+    // correct the gray color
+    col1 = (col1 == "gray") ? "lightslategray" : col1;
+    // correct the edge case gray color
+    col1 = (col1 == "none") ? "lightslategray" : col1;
+    return col1;
+  }
 
 module.exports = new TestGraph();
