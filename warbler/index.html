@@ -15,7 +15,7 @@
             <button class="btn btn-default" data-view="#swipe">
               Components
             </button>
-            <button class="btn btn-default active" data-view="#frames">
+            <button id="graph_button" class="btn btn-default active" data-view="#frames">
               &nbsp;
               <div class="icon icon-flow-branch"></div>
             </button>
@@ -326,7 +326,7 @@
 
     const remote = require('electron').remote
     remote.app.on('before-quit', (event) => {
-  console.warn('users tries to quit');
+      console.warn('users tries to quit');
     });
 
     
@@ -350,6 +350,8 @@
 
         let save_path = dialog.showSaveDialog(browserWindow, options);
         const fs = require('fs');
+        console.log(cy)
+        fs.writeFileSync(save_path, JSON.stringify(cy.json(), null, 2), 'utf-8');
         try { fs.writeFileSync(save_path, JSON.stringify(cy.json(), null, 2), 'utf-8'); }
         catch(e) { alert('Failed to save the file !'); }
       }
@@ -367,11 +369,15 @@
         let load_path = dialog.showOpenDialog({ properties: ['openFile', 'multiSelections'] })
         console.log(load_path[0])
         const fs = require('fs');
-        try { 
-          cy = cy.json(JSON.parse(fs.readFileSync(load_path[0], 'utf-8'))); 
-
-        }
-        catch(e) { alert('Failed to load the file !'); }
+        cy = cy.json(JSON.parse(fs.readFileSync(load_path[0], 'utf-8'))); 
+        console.log(cy)
+        test_graph.formatGraph(cy);
+        // try { 
+        //   cy = cy.json(JSON.parse(fs.readFileSync(load_path[0], 'utf-8'))); 
+        //   cy.createGraph.formatGraph(cy);
+        //   console.log(cy.createGraph)
+        // }
+        // catch(e) { alert('Failed to load the file !'); }
       }
     })
   </script>

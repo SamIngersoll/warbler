@@ -7,18 +7,69 @@ var cytoscape = require('./cytoscape');
 
 var TestGraph = function() {};
 
-TestGraph.prototype.saveGraph = function(cy) {
+var colors = {
+  red:    "#fc605b",
+  orange: "#fdbc40",
+  green:  "#34c84a",
+  blue:   "#57acf5",
+  none:   "#888888"
+};
+var outline_colors = {
+  red:    "#e82b25",
+  orange: "#f09226",
+  green:  "#11a627",
+  blue:   "#1080e0",
+  none:   "#636363"
+};
+
+TestGraph.prototype.saveGraph = function() {
+  
+}
+
+TestGraph.prototype.formatGraph = function(cy) {
+  console.log("formatted network")
+  var eles = cy.nodes().components();
+  console.log(eles)
+  // set color here
+  // console.log(eles[i]._private.eles[0]._private.data.tag.style)
+  for (var i=0 ; i<eles.length ; i+=1) {
+    var elem = eles[i];
+    var tag = elem._private.eles[0]._private.data.tag;
+    // cy.style().selector('node#'+id).style('background-color', colors[new_tag]).update()
+    // var seles = cy.$(':selected');
+    elem.style('background-color', colors[tag]);
+    elem.style('border-color', outline_colors[tag]);
+  }
+  make_unordered_table(cy);
+
+  // fix formatting from old files
+  var count = 0;
+  for (var i=0 ; i<cy._private.style.length ;i++ ) {
+    count += (cy._private.style[i].selector.inputText == ":selected")
+  }
+  
+  if (count == 1) {
+    // console.log(cy._private.style)
+    console.log("attempting to fix formatting")
+    // var new_selector = new Selector();
+    // console.log("SELECTOR", new_selector)
+    console.log(cy._private.style[4].properties)
+    cy._private.style[4].properties[6] = {}
+    cy._private.style[4].properties[6].name = "border-width"
+    cy._private.style[4].properties[6].pfValue = 4
+    cy._private.style[4].properties[6].units = "px"
+    cy._private.style[4].properties[6].value = 4
+    // cy._private.style[4]["border-width"] = {}
+    // cy._private.style[4]["border-width"].name = "border-width"
+    // cy._private.style[4]["border-width"].pfValue = 4
+    // cy._private.style[4]["border-width"].units = "px"
+    // cy._private.style[4]["border-width"].value = 4
+  }
   
 }
 
 TestGraph.prototype.createGraph = function() {
-  var colors = {
-    red:    "#fc605b",
-    orange: "#fdbc40",
-    green:  "#34c84a",
-    blue:   "#57acf5",
-    none:   "#888888"
-  };
+
   var cy = cytoscape({
     container: document.getElementById('cy'),
     elements: {
@@ -41,7 +92,9 @@ TestGraph.prototype.createGraph = function() {
   style: [
         {
           selector: 'node',
-          style: {'content': 'data(title)'},
+          style: {
+            'content': 'data(title)',
+          }
         },
 
         {
@@ -50,20 +103,25 @@ TestGraph.prototype.createGraph = function() {
             'curve-style': 'bezier',
             'target-arrow-shape': 'triangle'
           }
-        }
+        },
+        {
+          selector: ':selected',
+          style: {
+            'border-width': '4'
+          }
+      },
       ],
   });
   cy.boxSelectionEnabled(true);
+  format_network(cy);
+  // cy.style().selector('node:selected').style("background-color", "rgb(59,105,213)");
+  // cy.style().selector('node.done').style("background-blacken", "-0.8");
 
-  cy.style().selector('node:selected').style("background-color", "rgb(59,105,213)");
-  cy.style().selector('node.done').style("background-blacken", "-0.8");
-
-  
-
+ 
 
   // on RIGHT CLICK
   cy.on('cxttapstart', function(event){
-    var evtTarget = event.cyTarget;
+    var evtTarget = event.target;
     console.log(event);
     console.log("adding new node");
     var seles = cy.$(':selected');
@@ -86,20 +144,30 @@ TestGraph.prototype.createGraph = function() {
         var source_id = seles[0]._private.data.id;
         var eles = cy.add([
           { group: 'nodes', data: { id: new_node_id, title: "title", description: "description", tag: "none", done: "false"},
-                            position: { x: event.cyPosition.x,
-                                        y: event.cyPosition.y } },
+                            position: { x: event.position.x,
+                                        y: event.position.y } },
           { group: 'edges', data: { id: makeid(20), source: source_id, target: new_node_id } }
         ]);
         // select the newly added node
+        // var tag = cy.$('#'+id)._private.eles[0]._private.data.tag;
         cy.$(':selected').deselect();
         cy.$('#'+new_node_id).select();
+        // document.getElementById("title_form").value =
+        //                   cy.$('#'+new_node_id)._private.ids[new_node_id]._private.data.title;
+        // document.getElementById("description_form").value =
+        //                   cy.$('#'+new_node_id)._private.ids[new_node_id]._private.data.description;
+        // document.getElementById("id_form").value =
+        //                   cy.$('#'+new_node_id)._private.ids[new_node_id]._private.data.id;
+        cy.$('#'+new_node_id).style('background-color', colors["none"]);
+        cy.$('#'+new_node_id).style('border-color', outline_colors["none"]);
         document.getElementById("title_form").value =
-                          cy.$('#'+new_node_id)._private.ids[new_node_id]._private.data.title;
+                          cy.$('#'+new_node_id)._private.eles[0]._private.data.title;
         document.getElementById("description_form").value =
-                          cy.$('#'+new_node_id)._private.ids[new_node_id]._private.data.description;
+                          cy.$('#'+new_node_id)._private.eles[0]._private.data.description;
         document.getElementById("id_form").value =
-                          cy.$('#'+new_node_id)._private.ids[new_node_id]._private.data.id;
+                          cy.$('#'+new_node_id)._private.eles[0]._private.data.id;
         make_unordered_table(cy)
+        
       }
     } else if (seles.length > 1) {
       var source_id = seles[0]._private.data.id;
@@ -113,13 +181,18 @@ TestGraph.prototype.createGraph = function() {
       var new_node_id = makeid(20);
       var eles = cy.add([
         { group: 'nodes', data: { id: new_node_id, title: "title", description: "description", tag: "none", done: "false"},
-          position: { x: event.cyPosition.x,
-                      y: event.cyPosition.y } }
+          position: { x: event.position.x,
+                      y: event.position.y } }
         ]);
+      cy.$('#'+new_node_id).style('background-color', colors["none"]);
+      cy.$('#'+new_node_id).style('border-color', outline_colors["none"]);
       make_unordered_table(cy);
     }
 
   })
+  
+  
+
   // listener for button pushes within cytoscape
   window.addEventListener("activate", function(event) {
     var source = event.srcElement;
@@ -127,6 +200,10 @@ TestGraph.prototype.createGraph = function() {
     if (source.id == "todo_button") {
       console.log("TODO LIST");
       update_table(cy);
+    }
+    if (source.id == "graph_button") {
+      console.log("GRAPH VIEW");
+      cy.resize();
     }
 
     // if we are changing a color tag in the graph window
@@ -140,10 +217,19 @@ TestGraph.prototype.createGraph = function() {
         seles[i]._private.data.tag = new_tag;
         update_tr(cy,id)
 
-        cy.style().selector('node#'+id).style('background-color', colors[new_tag]).update()
+        // set color here
+        cy.$('#'+id).style('background-color', colors[new_tag]);
+        cy.$('#'+id).style('border-color', outline_colors[new_tag]);
+        // no longer works
+        // cy.style().selector('node#'+id).style('background-color', colors[new_tag]).update()
+        // cy.style().selector('node#'+id).style('border-color', outline_colors[new_tag]).update()
       }
     }
   });
+
+  // figure out how to make this function fire when network loads from file.
+  cy.on('layoutstop', format_network(cy));
+
   // on LEFT CLICK
   cy.on('tap', function(event){
     text_active = false;
@@ -151,7 +237,9 @@ TestGraph.prototype.createGraph = function() {
     document.activeElement.blur();
     // target holds a reference to the originator
     // of the event (core or element)
-    var evtTarget = event.cyTarget;
+    var evtTarget = event.target;
+    console.log("target",event.target)
+    console.log("cy",cy)
     if( evtTarget === cy ){
       // clear the form
       console.log('tap on background');
@@ -166,11 +254,19 @@ TestGraph.prototype.createGraph = function() {
     } else {
       // set the state of the form to the node's values
       console.log('tap on element');
-      document.getElementById("title_form").value = event.cyTarget._private.data.title;
-      document.getElementById("description_form").value = event.cyTarget._private.data.description;
-      document.getElementById("id_form").value = event.cyTarget._private.data.id;
+      // works for old version of cytoscape
+    //   var title = cy.$('#'+id)._private.eles[0]._private.data.title;
+    // var description = cy.$('#'+id)._private.eles[0]._private.data.description;
+    // var tag = cy.$('#'+id)._private.eles[0]._private.data.tag;
+    // var done = cy.$('#'+id)._private.eles[0]._private.data.done;
+
+      // for new version of cytoscape
+      console.log(event.target)
+      document.getElementById("title_form").value = event.target._private.data.title;
+      document.getElementById("description_form").value = event.target._private.data.description;
+      document.getElementById("id_form").value = event.target._private.data.id;
       // set the color tags
-      var set_tag = event.cyTarget._private.data.tag;
+      var set_tag = event.target._private.data.tag;
       var tags = document.getElementById("tag_select").items;
 
       for (var i=0 ; i<tags.length ; i++) {
@@ -218,9 +314,9 @@ TestGraph.prototype.createGraph = function() {
       update_tr(cy, id)
   };
 };
-make_unordered_table(cy)
+make_unordered_table(cy);
 return cy;
-
+};
   function makeid(length) {
     // makes random string of given length
     // https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript
@@ -261,11 +357,12 @@ return cy;
   function make_tr(cy, id) {
     // creates a new table row in the task table
     // uses information from the cytoscape db
-
-    var title = cy.$('#'+id)._private.ids[id]._private.data.title;
-    var description = cy.$('#'+id)._private.ids[id]._private.data.description;
-    var tag = cy.$('#'+id)._private.ids[id]._private.data.tag;
-    var done = cy.$('#'+id)._private.ids[id]._private.data.done;
+   
+    // for new version of cytoscape
+    var title = cy.$('#'+id)._private.eles[0]._private.data.title;
+    var description = cy.$('#'+id)._private.eles[0]._private.data.description;
+    var tag = cy.$('#'+id)._private.eles[0]._private.data.tag;
+    var done = cy.$('#'+id)._private.eles[0]._private.data.done;
     var done = (done == "true");
     var table = document.getElementById("task_table");
     var row = table.insertRow(-1); // 0 for first position, -1 for last position
@@ -358,13 +455,17 @@ return cy;
     // updates a table row in the task table
     // uses information from the cytoscape db
 
-    var title = cy.$('#'+id)._private.ids[id]._private.data.title;
-    var description = cy.$('#'+id)._private.ids[id]._private.data.description;
-    var tag = cy.$('#'+id)._private.ids[id]._private.data.tag;
-    var done = cy.$('#'+id)._private.ids[id]._private.data.done;
+    var title = cy.$('#'+id)._private.eles[0]._private.data.title;
+    var description = cy.$('#'+id)._private.eles[0]._private.data.description;
+    var tag = cy.$('#'+id)._private.eles[0]._private.data.tag;
+    var done = cy.$('#'+id)._private.eles[0]._private.data.done;
+
     var done = (done == "true");
     var table = document.getElementById("task_table")[0];
     var row = document.getElementById(id+"row");
+
+    console.log("ID", id)
+    console.log("ROW", row);
 
     var cell1 = row.cells[0];
     var cell2 = row.cells[1];
@@ -384,11 +485,12 @@ return cy;
       console.log("CHANGED")
       var id = this.parentNode.parentNode.parentNode.parentNode.id.slice(0,-3);
       console.log(id)
+      // var tag = cy.$('#'+id)._private.eles[0]._private.data.tag;
       if (box.checked) {
-        cy.$('#'+id)._private.ids[id]._private.data.done = "true";
+        cy.$('#'+id)._private.eles[0]._private.data.done = "true";
         cy.getElementById(id).addClass('done');
       } else {
-        cy.$('#'+id)._private.ids[id]._private.data.done = "false";
+        cy.$('#'+id)._private.eles[0]._private.data.done = "false";
         cy.getElementById(id).removeClass('done');
       }
     });
@@ -447,6 +549,20 @@ return cy;
       //    or node never had parents, so requirement to begin node is met
       nodes.orphans()
   }
-};
+  function format_network(cy) {
+    console.log("formatted network")
+    var eles = cy.nodes().components();
+    console.log(eles)
+    // set color here
+    for (var i=0 ; i<eles.length ; i+=1) {
+      var elem = eles[i];
+      var tag = elem._private.eles[0]._private.data.tag;
+      // cy.style().selector('node#'+id).style('background-color', colors[new_tag]).update()
+      // var seles = cy.$(':selected');
+      elem.style('background-color', colors[tag]);
+      elem.style('border-color', outline_colors[tag]);
+    }
+  }
+
 
 module.exports = new TestGraph();
